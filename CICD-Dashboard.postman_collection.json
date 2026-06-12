@@ -1,0 +1,158 @@
+{
+  "info": {
+    "name": "CICD Dashboard Backend",
+    "description": "All endpoints for the CI/CD Dashboard backend.\n\nSet the `baseUrl` variable to switch between local and deployed:\n- Local: http://localhost:3001\n- Deployed: https://api.staging.redappletech.com/cicd",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.staging.redappletech.com/cicd",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "68cabce716aed0dc7865009d83e572427de6575b1cfdc3741822067b489884c6",
+      "type": "string"
+    },
+    {
+      "key": "jobName",
+      "value": "martend-loyalty-backend-staging",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "x-api-key", "type": "string" },
+      { "key": "value", "value": "{{apiKey}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health",
+            "description": "Returns {ok: true} if the backend is running."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dashboard",
+            "description": "Returns the enriched job list with build status, PR info, ArgoCD sync status, and pipeline stage breakdown. Refreshed every 60s from Jenkins + GitHub + ArgoCD. Returns cached data immediately on subsequent calls (304 if unchanged)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Build Queue",
+      "item": [
+        {
+          "name": "Get Queue & Executors",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/queue",
+            "description": "Returns the current Jenkins build queue (pending builds) and executor status (busy/idle agents)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "List All Jobs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/jobs",
+            "description": "Returns raw list of all Jenkins jobs with last build number, result, and timestamp."
+          }
+        },
+        {
+          "name": "Get Job Info",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/jobs/{{jobName}}",
+            "description": "Returns details for a specific Jenkins job including last build info and SCM config."
+          }
+        },
+        {
+          "name": "Get Build History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobName}}/history?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobName}}", "history"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of recent builds to return (default: 10)"
+                }
+              ]
+            },
+            "description": "Returns the last N builds for a job with result, timestamp, and duration."
+          }
+        },
+        {
+          "name": "Get Build Log",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobName}}/log?build=lastBuild&start=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobName}}", "log"],
+              "query": [
+                {
+                  "key": "build",
+                  "value": "lastBuild",
+                  "description": "Build number or 'lastBuild' (default: lastBuild)"
+                },
+                {
+                  "key": "start",
+                  "value": "0",
+                  "description": "Byte offset for progressive log streaming (default: 0)"
+                }
+              ]
+            },
+            "description": "Returns the console log text for a specific build. Use 'start' offset for progressive streaming of large logs."
+          }
+        },
+        {
+          "name": "Trigger Build",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/build/{{jobName}}",
+            "description": "Triggers a new build for the specified Jenkins job. Fetches a fresh CSRF crumb + session cookie before each trigger. Returns {ok: true} on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Node Capacity",
+      "item": [
+        {
+          "name": "Get Node Capacity",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/nodes",
+            "description": "Returns per-node scheduling capacity from the K8s API.\n\nEach node includes:\n- allocatable: total CPU (millicores), memory (MiB), pods\n- requests: sum of all running pod resource requests\n- limits: sum of all running pod resource limits\n- ciReserve: CPU + memory carved out for Jenkins CI agents\n- namespaces: per-namespace breakdown sorted by pod count\n\nFree schedulable = allocatable - requests - ciReserve"
+          }
+        }
+      ]
+    }
+  ]
+}
