@@ -58,9 +58,14 @@ npm run dev
 Opens on `http://localhost:5173`.
 
 By default `vite.config.js` proxies `/api/*` straight to the deployed staging
-backend (`https://api.staging.redappletech.com/cicd/api/*`) with the
-`DASHBOARD_API_KEY` baked in, so the frontend works standalone without running
-the backend locally.
+backend (`https://api.staging.redappletech.com/cicd/api/*`), authenticating
+with `DASHBOARD_API_KEY` read from `frontend/.env.local` (gitignored — never
+commit this file):
+
+```bash
+echo "DASHBOARD_API_KEY=<value from backend/.env or cicd-dashboard-env secret>" \
+  > frontend/.env.local
+```
 
 To point the frontend at your local backend instead, edit the `proxy` block in
 `frontend/vite.config.js`:
@@ -72,7 +77,7 @@ proxy: {
     changeOrigin: true,
     rewrite: (path) => path, // drop the '/cicd' rewrite, no strip-prefix locally
     headers: {
-      'x-api-key': '<DASHBOARD_API_KEY from backend/.env>',
+      'x-api-key': env.DASHBOARD_API_KEY || '',
     },
   },
 },
