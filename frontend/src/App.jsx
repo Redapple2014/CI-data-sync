@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import StatusBadge from './components/StatusBadge.jsx';
 import Pipeline from './components/Pipeline.jsx';
 import BuildStatus from './components/BuildStatus.jsx';
@@ -82,16 +82,37 @@ export default function App() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [countdown, setCountdown] = useState(30);
+  const lastFetchTs = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch('/api/dashboard');
+      const url = lastFetchTs.current
+        ? `/api/projects?since=${lastFetchTs.current}`
+        : '/api/projects';
+      const res = await fetch(url);
       const json = await res.json();
-      setData(json.data || []);
+      const incoming = json.data || [];
+
+      if (!lastFetchTs.current) {
+        // First load — replace everything
+        setData(incoming);
+      } else {
+        // Incremental — merge changed/building projects into existing state
+        setData((prev) => {
+          const map = new Map(prev.map((item) => [item.jobName, item]));
+          for (const item of incoming) {
+            map.set(item.jobName, item);
+          }
+          return Array.from(map.values());
+        });
+      }
+
+      // Store Unix timestamp (seconds) for next incremental fetch
+      lastFetchTs.current = Math.floor(Date.now() / 1000);
       setUpdatedAt(json.updatedAt);
       setError(null);
     } catch {
-      setError('Failed to fetch dashboard data');
+      setError('Failed to fetch project data');
     } finally {
       setLoading(false);
       setCountdown(30);

@@ -16,7 +16,7 @@ function duration(ms) {
   return m > 0 ? `~${m}m` : `~${s}s`;
 }
 
-function QueueCard({ items }) {
+function QueueCard({ items = [] }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -54,7 +54,7 @@ function QueueCard({ items }) {
   );
 }
 
-function ExecutorCard({ executors }) {
+function ExecutorCard({ executors = [] }) {
   const busy = executors.filter((e) => !e.idle).length;
 
   return (
@@ -122,8 +122,9 @@ export default function BuildStatus() {
     async function poll() {
       try {
         const res = await fetch('/api/queue');
+        if (!res.ok) throw new Error(`${res.status}`);
         const json = await res.json();
-        setData(json);
+        setData({ queue: json.queue || [], executors: json.executors || [] });
         setLastUpdate(new Date());
         setError(null);
       } catch {

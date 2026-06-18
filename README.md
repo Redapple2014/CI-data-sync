@@ -35,7 +35,7 @@ To get cluster data (pods/nodes/`cicd-dashboard-projects` ConfigMap), point the
 backend at the staging-v2 kubeconfig:
 
 ```bash
-KUBECONFIG=/home/ratpc-079/.kube/staging-v2.yaml npm run dev
+KUBECONFIG=/home/ratpc-014/MUNNAF/Projects/OTHERS/personal-doc/rat-276-sa_192.yaml npm run dev
 ```
 
 Without `KUBECONFIG` set, `@kubernetes/client-node` falls back to
