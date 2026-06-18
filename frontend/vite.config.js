@@ -9,11 +9,11 @@ export default defineConfig({
       '/api': {
         target: 'https://api.staging.redappletech.com',
         changeOrigin: true,
-        // rewrite: (path) => `/cicd${path}`,  // enable when using staging URL
+        rewrite: (path) => `/cicd${path}`,
         headers: {
           'x-api-key': '71d0dee2086b3ed51ebedd45b95f0cbc0542f18f6ebdb85073994010b833569f',
         },
       },
     },
-  };
+  },
 });
